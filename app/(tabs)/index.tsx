@@ -1,50 +1,112 @@
+import {
+    HOME_BALANCE,
+    HOME_SUBSCRIPTIONS,
+    HOME_USER,
+    UPCOMING_SUBSCRIPTIONS,
+} from '@/constants/data';
+import { icons } from '@/constants/icons';
+import images from '@/constants/images';
 import '@/global.css';
-import { Link } from 'expo-router';
-import { Text } from 'react-native';
-import { SafeAreaView as RNSafeAreaView } from 'react-native-safe-area-context';
+import { formatCurrency } from '@/lib/utils';
 import { styled } from 'nativewind';
+import { FlatList, Image, Text, View } from 'react-native';
+import { SafeAreaView as RNSafeAreaView } from 'react-native-safe-area-context';
+import dayjs from 'dayjs';
+import ListHeading from '@/components/ListHeading';
+import UpcomingSubscriptionCard from '@/components/UpcomingSubscriptionCard';
+import SubscriptionCard from '@/components/SubscriptionCard';
+import { useState } from 'react';
 
 const SafeAreaView = styled(RNSafeAreaView);
 
 export default function App() {
+    const [expandedSubscriptionId, setExpandedSubscriptonId] = useState<
+        string | null
+    >(null);
+
     return (
         <SafeAreaView className="flex-1 bg-background p-5">
-            <Text className="text-xl font-bold text-success">
-                Welcome to Nativewind!
-            </Text>
+            <FlatList
+                ListHeaderComponent={() => (
+                    <>
+                        <View className="home-header">
+                            <View className="home-user">
+                                <Image
+                                    source={images.avatar}
+                                    className="home-avatar"
+                                />
+                                <Text className="home-user-name">
+                                    {HOME_USER.name}
+                                </Text>
+                            </View>
 
-            <Link
-                href="/onboarding"
-                className="mt-4 rounded bg-primary text-white p-4">
-                Go to Onboarding
-            </Link>
+                            <Image
+                                source={icons.add}
+                                className="home-add-icon"
+                            />
+                        </View>
 
-            <Link
-                href="/(auth)/sign-in"
-                className="mt-4 rounded bg-primary text-white p-4">
-                Go to Sign In
-            </Link>
+                        <View className="home-balance-card">
+                            <Text className="home-balance-label">Balance</Text>
 
-            <Link
-                href="/(auth)/sign-up"
-                className="mt-4 rounded bg-primary text-white p-4">
-                Go to Sign Up
-            </Link>
+                            <View className="home-balance-row">
+                                <Text className="home-balance-amount">
+                                    {formatCurrency(HOME_BALANCE.amount, 'USD')}
+                                </Text>
 
-            <Link
-                href="/subscriptions/spotify"
-                className="mt-4 rounded bg-primary text-white p-4">
-                Spotify Subscription
-            </Link>
+                                <Text className="home-balance-date">
+                                    {dayjs(HOME_BALANCE.nextRenewalDate).format(
+                                        'MM/DD',
+                                    )}
+                                </Text>
+                            </View>
+                        </View>
 
-            <Link
-                href={{
-                    pathname: '/subscriptions/[id]',
-                    params: { id: 'claude' },
-                }}
-                className="mt-4 rounded bg-primary text-white p-4">
-                Cluade Max Subscription
-            </Link>
+                        <View className="mb-5">
+                            <ListHeading title="Upcoming"></ListHeading>
+
+                            <FlatList
+                                data={UPCOMING_SUBSCRIPTIONS}
+                                horizontal={true}
+                                showsHorizontalScrollIndicator={false}
+                                keyExtractor={(item) => item.id}
+                                renderItem={({ item }) => (
+                                    <UpcomingSubscriptionCard {...item} />
+                                )}
+                                ListEmptyComponent={
+                                    <Text className="home-empty-state">
+                                        No Upcoming Subscriptions
+                                    </Text>
+                                }></FlatList>
+                        </View>
+
+                        <ListHeading title="All Subscriptions"></ListHeading>
+                    </>
+                )}
+                data={HOME_SUBSCRIPTIONS}
+                horizontal={false}
+                showsVerticalScrollIndicator={false}
+                keyExtractor={(item) => item.id}
+                renderItem={({ item }) => (
+                    <SubscriptionCard
+                        {...item}
+                        expanded={expandedSubscriptionId === item.id}
+                        onPress={() => {
+                            setExpandedSubscriptonId((currentId) =>
+                                currentId === item.id ? null : item.id,
+                            );
+                        }}
+                    />
+                )}
+                extraData={expandedSubscriptionId}
+                ItemSeparatorComponent={() => <View className="h-4"></View>}
+                ListEmptyComponent={
+                    <Text className="home-empty-state">
+                        No Subscriptions Yet
+                    </Text>
+                }
+                contentContainerClassName="pb-30"
+            />
         </SafeAreaView>
     );
 }
